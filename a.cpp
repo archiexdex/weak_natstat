@@ -147,7 +147,7 @@ vector<string> getfd() {
 string get_cmd(string pid) {
 	fstream fp;
 	string path = "/proc/";
-	path += pid + "/cmdline";
+	path += pid + "/comm";
 	fp.open(path.c_str(),ios::in);
 	fp.getline(buf,1024);
 	fp.close();
