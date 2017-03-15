@@ -1,6 +1,6 @@
 C = gcc
 CC = g++
 
-all:a.cpp
-	g++ a.cpp -std=gnu++11 -o hw1
+all:main.cpp
+	g++ main.cpp -std=gnu++11 -o hw1
 
