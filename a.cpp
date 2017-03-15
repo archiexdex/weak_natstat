@@ -4,6 +4,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <regex>
 using namespace std;
 
 
@@ -178,57 +179,81 @@ vector<node> parser(string path, int type) {
 	return vec;
 }
 
-void show_tcp() {
+void show_tcp(string sf) {
 	printf("List of TCP connections:\n");
 	printf("Proto Local Address           Foreign Address         PID/Program name and arguments\n");
+	smatch m;
+	regex reg(sf.c_str());
 	auto t4 = parser(tcpPath, 4);
 	for(auto ptr : t4) {
 		string ino = XD[ptr.inode];
 		if ( ino == "" ) ino = "-";
-		printf("%-6s%-24s%-24s%-24s\n","tcp",ptr.local.c_str(),ptr.rem.c_str(),ino.c_str());
+		sprintf(buf,"%s %s %s",ptr.local.c_str(),ptr.rem.c_str(),ino.c_str());
+		string tmp = buf;
+		if( regex_search(tmp,m,reg) )
+			printf("%-5s %-23s %-23s %-23s\n","tcp",ptr.local.c_str(),ptr.rem.c_str(),ino.c_str());
 	}
 	auto t6 = parser(tcp6Path, 6);
 	for(auto ptr : t6) {
 		string ino = XD[ptr.inode];
 		if ( ino == "" ) ino = "-";
-		printf("%-6s%-24s%-24s%-24s\n","tcp6",ptr.local.c_str(),ptr.rem.c_str(),ino.c_str());
+		sprintf(buf,"%s %s %s",ptr.local.c_str(),ptr.rem.c_str(),ino.c_str());
+		string tmp = buf;
+		if( regex_search(tmp,m,reg) )
+			printf("%-5s %-23s %-23s %-23s\n","tcp6",ptr.local.c_str(),ptr.rem.c_str(),ino.c_str());
 	}
-	
 }
 
-void show_udp() {
+void show_udp(string sf) {
 	printf("List of UDP connections:\n");
 	printf("Proto Local Address           Foreign Address         PID/Program name and arguments\n");
+	smatch m;
+	regex reg(sf.c_str() );
 	auto t4 = parser(udpPath, 4);
 	for(auto ptr : t4) {
 		string ino = XD[ptr.inode];
 		if ( ino == "" ) ino = "-";
-		printf("%-6s%-24s%-24s%-24s\n","udp",ptr.local.c_str(),ptr.rem.c_str(),ino.c_str());
+		sprintf(buf,"%s %s %s",ptr.local.c_str(),ptr.rem.c_str(),ino.c_str() );
+		string tmp = buf;
+		if( regex_search(tmp,m,reg) )
+			printf("%-5s %-23s %-23s %-23s\n","udp",ptr.local.c_str(),ptr.rem.c_str(),ino.c_str());
 	}
 	auto t6 = parser(udp6Path, 6);
 	for(auto ptr : t6) {
 		string ino = XD[ptr.inode];
 		if ( ino == "" ) ino = "-";
-		printf("%-6s%-24s%-24s%-24s\n","udp6",ptr.local.c_str(),ptr.rem.c_str(),ino.c_str());
+		sprintf(buf,"%s %s %s",ptr.local.c_str(),ptr.rem.c_str(),ino.c_str());
+		string tmp = buf;
+		if( regex_search(tmp,m,reg) )
+			printf("%-5s %-23s %-23s %-23s\n","udp6",ptr.local.c_str(),ptr.rem.c_str(),ino.c_str());
 	}
 	
 }
 
 int main(int argc, char* argv[]) {
 	
-	bool ist = true , isu = true;
+	bool ist = true , isu = true, istt = false, isuu = false;
 	vector<node> Vec;
-	int opt = getopt_long(argc, argv, short_option, long_option, NULL);
-	switch(opt) {
-		case 't':
-			ist = false;
-			break;
-		case 'u':
-			isu = false;
-			break;
-	};
-	
-	
+	int opt;
+	while ( (opt = getopt_long(argc, argv, short_option, long_option, NULL) ) != -1 ){
+		switch(opt) {
+			case 't':
+				istt = true;
+				break;
+			case 'u':
+				isuu = true;
+				break;
+			default :
+				puts("oops! The option is not accepted!");
+		};
+	}
+	if(istt || isuu){
+		ist = istt , isu = isuu;
+	}
+	string sf = "";
+	if( argc > optind )
+		sf = argv[optind];
+	//cout << optind << sf << argc << endl;
 	//Build inode to pid
 	vector<string> fds;
 	fds = getfd();
@@ -246,17 +271,16 @@ int main(int argc, char* argv[]) {
 			}
 			string pid = ptr.substr(st+2,ed-st-1);
 			//readlink(ptr.c_str(),buf,sizeof(buf) );
-			
 			XD[stat_buf.st_ino] = get_cmd(pid) ;
 			///printf(">>%d %s<<\n",stat_buf.st_ino,get_cmd(pid).c_str() );
 		}
 	}
 	if( ist ){
-		show_tcp();
+		show_tcp(sf);
 		putchar('\n');
 	}
 	if( isu ){
-		show_udp();
+		show_udp(sf);
 		putchar('\n');
 	}
 	
